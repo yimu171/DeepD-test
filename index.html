@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepD — Genome foundation model for all domains of life</title>
+<meta name="description" content="DeepD is a phylogeny-informed sparse mixture-of-experts genome foundation model with single-nucleotide resolution and a 1-million-token context. It unifies sequence-to-function prediction with controllable, chromosome-scale sequence generation across all domains of life.">
+<meta name="theme-color" content="#0b1620">
+<meta property="og:title" content="DeepD — Genome foundation model for all domains of life">
+<meta property="og:description" content="Efficient genome modeling and controllable long-context sequence generation across domains of life.">
+<meta property="og:image" content="assets/brand/logo.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon.png">
+<link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============================================================ NAV ====== -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a class="nav__brand" href="#top" aria-label="DeepD home">
+      <img class="nav__logo nav__logo--light" src="assets/brand/logo-word-light.png" alt="DeepD" width="144" height="48">
+      <img class="nav__logo nav__logo--dark" src="assets/brand/logo-word.png" alt="" width="144" height="48" aria-hidden="true">
+    </a>
+    <nav class="nav__links" id="navLinks" aria-label="Primary">
+      <a href="#overview">Overview</a>
+      <a href="#model">Model</a>
+      <a href="#learn">Interpretability</a>
+      <a href="#predict">Prediction</a>
+      <a href="#design">Design</a>
+      <a href="#compare">Comparison</a>
+      <a href="#resources">Resources</a>
+      <a href="#team">Team</a>
+    </nav>
+    <div class="nav__actions">
+      <button class="nav__burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      </button>
+      <div class="nav__orgs">
+        <a href="https://www.cau.edu.cn/" target="_blank" rel="noopener" title="China Agricultural University"><img src="assets/partners/cau.png" alt="China Agricultural University" width="256" height="320"></a>
+        <a href="https://www.biomap.com/" target="_blank" rel="noopener" title="BioMap Research"><img src="assets/partners/biomap.png" alt="BioMap" width="480" height="195"></a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- =========================================================== HERO ====== -->
+<section class="hero">
+  <canvas class="hero__canvas" id="helix" aria-hidden="true"></canvas>
+  <div class="hero__veil" aria-hidden="true"></div>
+  <div class="wrap hero__inner">
+    <p class="hero__eyebrow">
+      <span class="pill pill--glow">Genome foundation model</span>
+      <span class="hero__eyebrow-text">China Agricultural University &nbsp;·&nbsp; BioMap Research</span>
+    </p>
+    <h1 class="hero__title">
+      Reading and writing genomes<br>
+      <span class="hl">across all domains of life</span>
+    </h1>
+    <p class="hero__lede">
+      DeepD is a sparse mixture-of-experts genome foundation model that learns from genes and the full
+      intergenic landscape across all domains of life. It combines single-nucleotide resolution with a
+      million-token context and efficient sparse computation, supporting broad sequence-to-function
+      prediction with particular strength in regulatory and non-coding tasks. Beyond experimentally
+      validated promoter design, its Context–Anchor–Body (CAB) strategy enables controllable generation
+      of entire yeast chromosomes and megabase-scale plant genomic segments. These sequences preserve
+      coherent genic regions while introducing variations consistent with natural population patterns.
+    </p>
+    <div class="hero__cta">
+      <a class="btn btn--primary" data-preprint href="#resources">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span data-preprint-label>Read the preprint</span>
+      </a>
+      <a class="btn btn--light" href="https://github.com/biomap-research/DeepD" target="_blank" rel="noopener">Code &amp; data on GitHub</a>
+      <a class="btn btn--text" href="#overview">Explore DeepD
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+    <dl class="hero__stats">
+      <div><dt><span data-count="63">63</span>B</dt><dd>parameters, sparse MoE<br>with ~1B active per token</dd></div>
+      <div><dt><span data-count="1">1</span>M</dt><dd>token context at<br>single-nucleotide resolution</dd></div>
+      <div><dt><span data-count="5.69" data-decimals="2">5.69</span>&thinsp;Tb</dt><dd>unselected whole-genome<br>pretraining sequence</dd></div>
+      <div><dt><span data-count="3.07" data-decimals="2">3.07</span>M</dt><dd>genomes spanning eukaryotes,<br>archaea, bacteria and viruses</dd></div>
+    </dl>
+  </div>
+  <div class="wrap"><div class="seq-ticker" aria-hidden="true"><div class="seq-ticker__row" id="ticker"></div></div></div>
+</section>
+
+<!-- ======================================================= OVERVIEW ====== -->
+<section class="section" id="overview">
+  <div class="wrap">
+    <div class="intro">
+      <div class="intro__head reveal">
+        <span class="kicker">Introducing DeepD</span>
+        <h2>One model to predict, interpret and design genomes</h2>
+      </div>
+      <div class="intro__body reveal">
+        <p class="lede">
+          Genomes are long, heterogeneous and evolutionarily diverse, and most of their sequence is
+          non-coding. DeepD was built to model them as they occur in nature. It pairs efficient
+          sparse computation with pretraining on unselected whole genomes and a new
+          <b>Context–Anchor–Body</b> strategy for controllable long-sequence generation.
+        </p>
+        <p>
+          DeepD was trained at two scales: <b>DeepD-2B</b> (1.8 billion parameters, 1 trillion tokens)
+          and <b>DeepD-60B</b> (63 billion parameters, 5.69 trillion tokens). The same model supports
+          zero-shot and supervised sequence-to-function prediction, exposes interpretable genomic
+          features through its expert routing, and generates experimentally validated promoters,
+          complete yeast chromosomes and megabase-scale <i>Arabidopsis</i> segments.
+        </p>
+      </div>
+    </div>
+
+    <div class="pillars">
+      <article class="pillar reveal">
+        <div class="pillar__icon"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="6" cy="16" r="3"/><circle cx="26" cy="7" r="3"/><circle cx="26" cy="16" r="3" class="off"/><circle cx="26" cy="25" r="3"/><path d="M9 16 23 7M9 16h14M9 16l14 9" class="ln"/></svg></div>
+        <h3>Efficient long context</h3>
+        <p>A sparse mixture-of-experts backbone routes each nucleotide to only 8 of 576 experts, extending context from 8K to 1M tokens at a fraction of dense-model cost.</p>
+      </article>
+      <article class="pillar reveal">
+        <div class="pillar__icon"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 16h7M11 16V8h8M11 16v8h8M19 8h9M19 8V4M19 24h9M19 24v4" class="ln"/><circle cx="4" cy="16" r="2.4"/><circle cx="28" cy="8" r="2.4"/><circle cx="28" cy="24" r="2.4"/></svg></div>
+        <h3>Phylogeny-informed</h3>
+        <p>Species labels embedded from an established phylogenetic tree condition a species-informed router, so DeepD learns lineage-specific composition, codon usage and coding rules.</p>
+      </article>
+      <article class="pillar reveal">
+        <div class="pillar__icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="12" width="6" height="8" rx="1.5"/><rect x="11" y="12" width="4" height="8" rx="1.5" class="off"/><rect x="17" y="12" width="7" height="8" rx="1.5"/><rect x="26" y="12" width="3" height="8" rx="1.5" class="off"/><path d="M3 25h26" class="ln"/></svg></div>
+        <h3>Unselected whole genomes</h3>
+        <p>Pretraining keeps every genic region and the full intergenic space, including regulatory and repetitive DNA, rather than enriching for genes or sampling short segments.</p>
+      </article>
+      <article class="pillar reveal">
+        <div class="pillar__icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="11" width="7" height="10" rx="1.5" class="off"/><rect x="12.5" y="11" width="7" height="10" rx="1.5"/><rect x="22" y="11" width="7" height="10" rx="1.5" class="off"/><path d="M6.5 7h19M22 4l3.5 3L22 10" class="ln"/></svg></div>
+        <h3>Controllable generation</h3>
+        <p>The Context–Anchor–Body strategy generates each segment between upstream and downstream constraints and relays forward, decoupling output length from the context window.</p>
+      </article>
+    </div>
+
+    <div class="glance reveal">
+      <h3 class="glance__title">Highlights</h3>
+      <div class="glance__grid">
+        <a class="glance__item" href="#predict-human"><b>0.934</b><span>AUROC on ClinVar SNVs, zero-shot</span></a>
+        <a class="glance__item" href="#predict-human"><b>0.965</b><span>AUROC on ClinVar non-SNVs, zero-shot</span></a>
+        <a class="glance__item" href="#predict-species"><b>0.297</b><span>Best mean |ρ| on ncRNA fitness, ahead of Evo series and RiNALMo</span></a>
+        <a class="glance__item" href="#design-promoter"><b>76% / 83%</b><span>Designed High / Low maize promoters meeting target strength in vivo</span></a>
+        <a class="glance__item" href="#design-yeast"><b>29</b><span>Full-length yeast chromosome III sequences generated</span></a>
+        <a class="glance__item" href="#design-plant"><b>99.2%</b><span>Core genes recovered in a generated 1-Mb <i>Arabidopsis</i> segment</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== MODEL ====== -->
+<section class="section section--tint" id="model">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <span class="kicker">01 · Model</span>
+      <h2>A sparse, phylogeny-aware architecture</h2>
+      <p class="lede">DeepD integrates DNA sequence, species label embeddings and annotation features in a
+        sparse mixture-of-experts transformer, trained with next-token prediction on byte-level nucleotides.</p>
+    </header>
+
+    <div class="split split--wide reveal">
+      <figure class="card card--figure zoomable">
+        <img src="assets/fig/f1-moe.webp" alt="DeepD mixture-of-experts architecture: species embedding and DNA sequence feed multi-scale gated attention and a species-informed router selecting shared and routed experts." loading="lazy" width="2000" height="966" data-full="figure-1" data-caption="Figure 1A (right). The DeepD MoE block: multi-scale gated attention followed by a species-informed router over one shared and many routed experts.">
+        <figcaption><b>Figure 1A.</b> Species embedding and DNA sequence pass through multi-scale gated attention and a species-informed router.</figcaption>
+      </figure>
+      <div class="stack">
+        <ul class="feature-list">
+          <li><b>Species-informed router.</b> The gating network sees both the token and a species representation, so experts can capture sequence-level and lineage-specific signals.</li>
+          <li><b>Multi-scale gated attention.</b> In each block 24 of 32 heads use sliding-window attention and 8 use full attention, capturing local motifs and long-range dependencies. A sigmoid output gate stabilizes long-context training.</li>
+          <li><b>576 experts, 8 active.</b> One shared expert plus routed experts. Each token activates about 1 billion of the 63 billion parameters.</li>
+          <li><b>Reweighted objective.</b> Soft-masked repeats stay in their native context but contribute less to the loss, so abundant repeats do not dominate optimization.</li>
+        </ul>
+        <div class="table-wrap">
+          <table class="spec">
+            <thead><tr><th></th><th>DeepD-2B</th><th>DeepD-60B</th></tr></thead>
+            <tbody>
+              <tr><th>Total parameters</th><td>1.8B</td><td>63B</td></tr>
+              <tr><th>Training tokens</th><td>1T</td><td>5.69T</td></tr>
+              <tr><th>Context length</th><td>8K</td><td>8K → 1M</td></tr>
+              <tr><th>Layers / heads</th><td>24 / 16</td><td>24 / 32</td></tr>
+              <tr><th>Hidden size</th><td>768</td><td>2,048</td></tr>
+              <tr><th>Experts (activated)</th><td>128 (8)</td><td>576 (8)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- interactive: attention + routing -->
+    <div class="subhead reveal" id="attention">
+      <h3>Multi-scale attention and species-informed routing</h3>
+      <p>Each block mixes 24 sliding-window attention heads for local motifs with 8 full-attention heads
+        for long-range dependencies, and a species-informed router that selects experts per token. Both
+        modules below are interactive.</p>
+    </div>
+
+    <div class="labs reveal">
+      <div class="lab">
+        <div class="lab__head">
+          <h3>Attention head roles</h3>
+          <span class="spacer"></span>
+          <span class="chip chip--schematic">mask is schematic</span>
+        </div>
+        <div class="heads" id="heads" role="list" aria-label="32 attention heads"></div>
+        <div class="legend">
+          <span><i style="background:rgba(29,78,216,.45)"></i>SWA · 256-token window ×24</span>
+          <span><i style="background:rgba(4,153,140,.55)"></i>FA · full attention ×8</span>
+        </div>
+        <div class="mask-wrap">
+          <canvas id="maskCanvas" width="240" height="240" aria-label="Attention mask illustration"></canvas>
+          <p class="lab__note" id="maskNote" style="text-align:center;margin:0">Hover any head to see the shape of its attention mask.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab__head">
+          <h3>Species-informed routing</h3>
+          <span class="spacer"></span>
+          <div class="seg" id="routeSpecies" role="tablist" aria-label="Choose a species label"></div>
+        </div>
+        <div class="moe" id="moeViz"></div>
+        <p class="lab__note" id="routeNote"></p>
+      </div>
+    </div>
+
+    <!-- corpus -->
+    <div class="subhead reveal" id="corpus">
+      <h3>Pretrained on whole genomes from every domain of life</h3>
+      <p>The DeepD-60B corpus comprises about 5.90 Tb of nucleotide sequence. The eukaryotic partition
+        covers 3,600 animal, 928 plant, 767 fungal and 139 protist genomes. Coding sequence, introns,
+        repeats, other intergenic DNA and viral genomes are all represented, so the model learns
+        genome-wide organization rather than genes alone.</p>
+    </div>
+
+    <div class="split reveal">
+      <div class="card corpus">
+        <div class="corpus__head">
+          <span class="corpus__title">Pretraining corpus by domain</span>
+          <div class="seg" role="tablist" aria-label="Corpus metric">
+            <button role="tab" aria-selected="true" data-metric="dna">Sequence</button>
+            <button role="tab" aria-selected="false" data-metric="genomes">Genomes</button>
+          </div>
+        </div>
+        <ul class="corpus__bars" id="corpusBars">
+          <li data-dna="5390" data-genomes="5434"><span class="corpus__name">Eukaryotes</span><span class="corpus__bar"><i></i></span><span class="corpus__val"></span></li>
+          <li data-dna="452.60" data-genomes="136485"><span class="corpus__name">Bacteria</span><span class="corpus__bar"><i></i></span><span class="corpus__val"></span></li>
+          <li data-dna="45.22" data-genomes="2917521"><span class="corpus__name">Viruses</span><span class="corpus__bar"><i></i></span><span class="corpus__val"></span></li>
+          <li data-dna="12.09" data-genomes="6932"><span class="corpus__name">Archaea</span><span class="corpus__bar"><i></i></span><span class="corpus__val"></span></li>
+        </ul>
+        <p class="note">Bar length on a logarithmic scale.</p>
+        <figure class="zoomable corpus__fig">
+          <img src="assets/fig/f1-tokens.webp" alt="Token composition of pretraining and midtraining stages and number of nucleotides for DeepD-2B and DeepD-60B." loading="lazy" width="2000" height="819" data-full="figure-1" data-caption="Figure 1C and 1E. Token composition (CDS, introns, repeats, other intergenic, virus) in pretraining and midtraining, and nucleotides seen by DeepD-2B and DeepD-60B.">
+          <figcaption><b>Figure 1C, E.</b> Token composition by stage, and total training nucleotides.</figcaption>
+        </figure>
+      </div>
+      <figure class="card card--figure zoomable">
+        <img src="assets/fig/f1-tree.webp" alt="Circular phylogenetic tree of 5,434 eukaryotic genomes in the pretraining corpus, highlighting Animalia, Plantae, Fungi and Protista." loading="lazy" width="1918" height="2000" data-full="figure-1" data-caption="Figure 1B. Phylogenetic tree of the 5,434 eukaryotic genomes in the DeepD pretraining corpus.">
+        <figcaption><b>Figure 1B.</b> Phylogenetic tree of the 5,434 eukaryotic genomes in the corpus.</figcaption>
+      </figure>
+    </div>
+
+    <!-- long context -->
+    <div class="subhead reveal" id="context">
+      <h3>Long context, efficiently</h3>
+      <p>Pretraining runs at an 8K context. Midtraining then extends the window step by step to 1M tokens.
+        Validation perplexity keeps improving as the context grows, and sparse routing keeps the cost of
+        ultra-long sequences manageable.</p>
+    </div>
+
+    <div class="ladder reveal" id="ladder">
+      <div class="ladder__track">
+        <button class="ladder__stop is-active" data-i="0"><b>8K</b><span>Pretraining</span></button>
+        <button class="ladder__stop" data-i="1"><b>32K</b><span>Midtraining</span></button>
+        <button class="ladder__stop" data-i="2"><b>128K</b><span>Midtraining</span></button>
+        <button class="ladder__stop" data-i="3"><b>512K</b><span>Midtraining</span></button>
+        <button class="ladder__stop" data-i="4"><b>1M</b><span>Midtraining</span></button>
+        <div class="ladder__fill" id="ladderFill"></div>
+      </div>
+      <p class="ladder__text" id="ladderText" aria-live="polite"></p>
+    </div>
+
+    <div class="grid-2 reveal">
+      <figure class="card card--figure zoomable">
+        <img src="assets/fig/f1-perplexity.webp" alt="Validation perplexity of DeepD-60B midtraining decreases as context length increases from 8K to 1M." loading="lazy" width="2000" height="1907" data-full="figure-1" data-caption="Figure 1F. Validation perplexity of DeepD-60B midtraining across context lengths.">
+        <figcaption><b>Figure 1F.</b> Validation perplexity falls as the context extends from 8K to 1M.</figcaption>
+      </figure>
+      <figure class="card card--figure zoomable">
+        <img src="assets/fig/f1-iteration.webp" alt="Total iteration time on 64 GPUs for MoE-60B versus Dense-60B across training sequence lengths." loading="lazy" width="2000" height="1400" data-full="figure-1" data-caption="Figure 1G. Iteration time on 64 GPUs for the sparse DeepD-60B (MoE) versus a dense 60B model.">
+        <figcaption><b>Figure 1G.</b> Iteration time of the sparse MoE-60B versus a dense 60B model on 64 GPUs. The gap widens with sequence length.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== LEARN ====== -->
+<section class="section" id="learn">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <span class="kicker">02 · Interpretability</span>
+      <h2>What DeepD learns about genomes</h2>
+      <p class="lede">DeepD's experts organize themselves around biology. Probing them reveals
+        species-specific coding rules, and routing weights alone are enough to decode genes, repeats
+        and distal regulatory elements.</p>
+    </header>
+
+    <div class="subhead reveal" id="phylogeny">
+      <h3>Phylogeny-informed modeling captures species-specific rules</h3>
+      <p>Early layers contain distinct AT-activated and GC-activated expert clusters. Species tags then
+        steer generation toward each lineage's GC content and codon usage. Zero-shot likelihoods also
+        respect synonymous codon preferences and penalize disruptive mutations.</p>
+    </div>
+
+    <div class="explorer reveal" data-explorer>
+      <div class="explorer__tabs" role="tablist" aria-label="Phylogeny-informed modeling">
+        <button role="tab" aria-selected="true" data-panel="ph-experts"><b>GC-sensing experts</b><span>Layer 2 experts split into AT- and GC-activated clusters</span></button>
+        <button role="tab" aria-selected="false" data-panel="ph-gc"><b>Species-conditioned GC</b><span>R² = 0.706, Spearman ρ = 0.816 against natural genomes</span></button>
+        <button role="tab" aria-selected="false" data-panel="ph-codon"><b>Codon usage</b><span>Human and yeast RSCU recovered across all 64 codons</span></button>
+        <button role="tab" aria-selected="false" data-panel="ph-cag"><b>Zero-shot codon probing</b><span>CAG→CAA likelihood tracks each species' codon preference</span></button>
+        <button role="tab" aria-selected="false" data-panel="ph-del"><b>Functional constraint</b><span>Deletions penalized most in CDS, rRNA and tRNA</span></button>
+      </div>
+      <div class="explorer__stage">
+        <figure class="explorer__panel is-active zoomable" id="ph-experts">
+          <img src="assets/fig/f2-gc-experts.webp" alt="Heatmap of Layer 2 expert activation across samples sorted by GC content showing AT-activated and GC-activated clusters." loading="lazy" width="2000" height="1342" data-full="figure-2" data-caption="Figure 2B. Relative activation of Layer 2 experts across a genomic GC gradient (25.1% to 74.9%).">
+          <figcaption><b>Figure 2B.</b> As input GC content rises from 25% to 75%, activation hands over from AT-activated to GC-activated experts, with no supervision.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="ph-gc">
+          <img src="assets/fig/f2-gc-generated.webp" alt="GC content of natural sequences versus sequences generated with species labels across diverse taxa." loading="lazy" width="2000" height="1260" data-full="figure-2" data-caption="Figure 2C. GC content of natural genomes (black) versus DeepD-generated sequences with species tags (pink). Without a tag, generation defaults to about 40% GC.">
+          <figcaption><b>Figure 2C.</b> With species tags, generated sequences match natural GC content across a wide spectrum. Without a tag they default to about 40% GC.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="ph-codon">
+          <img src="assets/fig/f2-codon.webp" alt="Radar chart comparing relative synonymous codon usage of natural and generated sequences for H. sapiens and S. cerevisiae." loading="lazy" width="1530" height="2000" data-full="figure-2" data-caption="Figure 2D. RSCU of 1,000-bp coding sequences generated under H. sapiens and S. cerevisiae tags versus natural references.">
+          <figcaption><b>Figure 2D.</b> Coding sequences generated from a 50-bp prompt reproduce the GC-rich codon preferences of human and the AT-biased preferences of yeast.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="ph-cag">
+          <img src="assets/fig/f2-cag.webp" alt="Mean change in log-likelihood for G-to-A transitions at the third position of CAG codons across prokaryotes and eukaryotes." loading="lazy" width="2000" height="1148" data-full="figure-2" data-caption="Figure 2E. Zero-shot mutational probing of CAG→CAA synonymous substitutions, colored by each species' natural CAG preference.">
+          <figcaption><b>Figure 2E.</b> In low-CAG species DeepD favors the synonymous G→A change. In high-CAG species it penalizes it, all at single-nucleotide resolution and without fine-tuning.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="ph-del">
+          <img src="assets/fig/f2-deletion.webp" alt="Violin plots of likelihood change after 10-bp deletions across functional genomic regions in prokaryotes and eukaryotes." loading="lazy" width="2000" height="1280" data-full="figure-2" data-caption="Figure 2F. Likelihood penalties for simulated 10-bp deletions across functional genomic elements.">
+          <figcaption><b>Figure 2F.</b> 10-bp deletions cost the most likelihood in coding sequence and structured RNAs, and little in introns and intergenic DNA, mirroring relaxed evolutionary pressure.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="labs reveal">
+      <div class="lab">
+        <div class="lab__head">
+          <h3>Drag GC content and watch the experts hand over</h3>
+          <span class="spacer"></span>
+          <span class="chip chip--schematic">redrawn schematic</span>
+        </div>
+        <canvas id="gcHeat" class="gc-canvas" width="520" height="300" aria-label="Expert activation heatmap illustration"></canvas>
+        <div class="heat-axis"><span>GC 25%</span><span>samples sorted by GC content</span><span>GC 75%</span></div>
+        <div class="slider">
+          <div class="slider__top">
+            <span>Input sequence GC content</span>
+            <span class="spacer"></span>
+            <b id="gcVal">45.0%</b>
+          </div>
+          <input type="range" id="gcRange" min="250" max="750" value="450" step="1" aria-label="Input sequence GC content">
+        </div>
+        <div class="stats stats--row" style="margin-top:16px">
+          <div class="stat"><b id="atExperts">—</b><span>mean Z-score, AT-activated experts</span></div>
+          <div class="stat"><b id="gcExperts">—</b><span>mean Z-score, GC-activated experts</span></div>
+        </div>
+        <p class="lab__note">Redrawn after Figure 2B to convey the activation switch as GC rises. For expert indices and exact values, see the original panel.</p>
+      </div>
+
+      <div class="lab">
+        <div class="lab__head">
+          <h3>Generated GC content with and without a species label</h3>
+          <span class="spacer"></span>
+          <div class="seg" id="tagMode" role="tablist" aria-label="Toggle the species label">
+            <button class="is-on" data-tag="on">With label</button>
+            <button data-tag="off">No label</button>
+          </div>
+        </div>
+        <svg class="chart" id="gcScatter" viewBox="0 0 520 260" role="img" aria-label="Natural versus generated GC content scatter plot"></svg>
+        <div class="stats stats--row" style="margin-top:14px">
+          <div class="stat"><b>R² = 0.706</b><span>generated vs natural GC</span></div>
+          <div class="stat"><b>ρ = 0.816</b><span>Spearman correlation</span></div>
+          <div class="stat"><b>≈ 39%</b><span>baseline without a label</span></div>
+        </div>
+        <p class="lab__note">Dark diamonds are natural GC content, teal circles the sequence generated under that species label, for 11 species in Figure 2C; the dashed diagonal is y = x. Toggling the label off drops every point onto the ~39% unconditional baseline.</p>
+      </div>
+    </div>
+
+    <div class="subhead reveal" id="routing">
+      <h3>Expert routing interprets coding, regulatory and repetitive DNA</h3>
+      <p>We trained lightweight classifiers on DeepD's 576-dimensional gating vectors from layers 2–24.
+        Routing alone resolves CRISPR arrays and operons in <i>E. coli</i>, gene structure and repeat
+        classes in human (mean AUPRC 0.92), and distal enhancers in the repeat-rich maize genome.</p>
+    </div>
+
+    <div class="explorer reveal" data-explorer>
+      <div class="explorer__tabs" role="tablist" aria-label="Expert routing">
+        <button role="tab" aria-selected="true" data-panel="rt-scheme"><b>Probing framework</b><span>Gating weights → per-annotation classifiers</span></button>
+        <button role="tab" aria-selected="false" data-panel="rt-ecoli"><b><i>E. coli</i></b><span>CRISPR repeat–spacer register and <i>lac</i> operon genes</span></button>
+        <button role="tab" aria-selected="false" data-panel="rt-hbb"><b>Human HBB cluster</b><span>CDS, LTR, LINE and SINE tracks with the 1M model</span></button>
+        <button role="tab" aria-selected="false" data-panel="rt-auprc"><b>Maize, 8K vs 1M</b><span>Longer context improves CRE and TE decoding</span></button>
+        <button role="tab" aria-selected="false" data-panel="rt-tb1"><b>Maize <i>tb1</i></b><span>Recovers the Hopscotch enhancer ~60 kb upstream</span></button>
+      </div>
+      <div class="explorer__stage">
+        <figure class="explorer__panel is-active zoomable" id="rt-scheme">
+          <img src="assets/fig/f5-scheme.webp" alt="Probing framework: DeepD-60B 8K or 1M, 576 expert gating weights from 23 layers used to train binary classifiers for CDS, intron, TE and other annotations." loading="lazy" width="2000" height="1108" data-full="figure-5" data-caption="Figure 5A. Probing framework: 576-dimensional expert gating vectors from layers 2–24 train annotation-specific classifiers; the best layer per annotation produces probability tracks.">
+          <figcaption><b>Figure 5A.</b> For each annotation class, a classifier is trained on gating vectors and the best-performing layer is kept.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="rt-ecoli">
+          <img src="assets/fig/f5-ecoli.webp" alt="Predicted probability tracks in E. coli: alternating CRISPR repeat and spacer signals, and lac operon gene boundaries." loading="lazy" width="2000" height="1205" data-full="figure-5" data-caption="Figure 5B. DeepD-60B (8K) routing tracks at a CRISPR array and the lac operon in E. coli.">
+          <figcaption><b>Figure 5B.</b> Repeat and spacer probabilities alternate in step with the array, and gene signals align with <i>lacA</i>, <i>lacY</i>, <i>lacZ</i> and <i>lacI</i>.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="rt-hbb">
+          <img src="assets/fig/f5-human-hbb.webp" alt="Predicted probability tracks for CDS, LTR, LINE and SINE across the human HBB gene cluster on chromosome 11." loading="lazy" width="2000" height="479" data-full="figure-5" data-caption="Figure 5C. DeepD-60B (1M) routing tracks across the human HBB gene cluster on chromosome 11.">
+          <figcaption><b>Figure 5C.</b> CDS signals at <i>HBB</i> and <i>HBD</i>, with class-specific LTR, LINE and SINE tracks. Genome-wide AUPRC reaches 0.96 for CDS and 0.95 for SINE.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="rt-auprc">
+          <img src="assets/fig/f5-maize-auprc.webp" alt="Bar chart of maize annotation AUPRC for 8K and 1M models with best layer per category." loading="lazy" width="2000" height="501" data-full="figure-5" data-caption="Figure 5D. Maize annotation decoding with DeepD-60B (8K) versus DeepD-60B (1M), and the best layer per category.">
+          <figcaption><b>Figure 5D.</b> In maize, where more than 85% of the genome is repetitive, the 1M-context model decodes gene structure, CREs and TE families better than the 8K model.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="rt-tb1">
+          <img src="assets/fig/f5-maize-tb1.webp" alt="Routing probability tracks across the maize tb1 locus, including the upstream Hopscotch retrotransposon enhancer." loading="lazy" width="2000" height="694" data-full="figure-5" data-caption="Figure 5E. Routing tracks across the maize tb1 domestication locus; the Hopscotch LTR/Copia enhancer ~60 kb upstream is highlighted.">
+          <figcaption><b>Figure 5E.</b> At the domestication gene <i>tb1</i>, DeepD recovers the gene and a prominent signal at the functionally validated Hopscotch enhancer about 60 kb upstream.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= PREDICT ====== -->
+<section class="section section--tint" id="predict">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <span class="kicker">03 · Prediction</span>
+      <h2>Sequence-to-function prediction across species</h2>
+      <p class="lede">DeepD scores variants zero-shot by the change in sequence likelihood, with no
+        task-specific labels. Its embeddings also support supervised prediction of regulatory function.
+        It is strongest where genomes are hardest to read: non-coding and regulatory DNA.</p>
+    </header>
+
+    <div class="subhead reveal" id="predict-species">
+      <h3>DNA, RNA and protein, from phage to mammals</h3>
+    </div>
+    <div class="metrics reveal">
+      <div class="metric"><b>0.551</b><span>Mean |ρ|, bacterial protein fitness</span><small>7 datasets · ahead of Evo series and ProGen2</small></div>
+      <div class="metric"><b>0.478</b><span>Mean |ρ|, eukaryotic protein fitness</span><small>5 datasets · on par with the strongest models</small></div>
+      <div class="metric metric--best"><b>0.297</b><span>Mean |ρ|, ncRNA fitness</span><small>7 datasets · best overall, including RiNALMo</small></div>
+      <div class="metric"><b>0.603</b><span>AUROC, phage gene essentiality</span><small>Comparable to the best Evo 2 models</small></div>
+    </div>
+
+    <div class="split split--ncrna reveal">
+      <figure class="card card--figure zoomable">
+        <img src="assets/fig/f3-ncrna.webp" alt="Bar chart of zero-shot ncRNA fitness prediction; DeepD-60B mean 0.297 is highest." loading="lazy" width="1401" height="2000" data-caption="Figure 3A (ncRNA). Zero-shot ncRNA fitness prediction across seven datasets spanning rRNAs, tRNAs and ribozymes.">
+        <figcaption><b>Figure 3A.</b> Zero-shot ncRNA fitness across rRNA, tRNA and ribozyme datasets.</figcaption>
+      </figure>
+      <figure class="card card--figure zoomable">
+        <img src="assets/fig/f3-regulatory.webp" alt="Supervised classifier AUROC on yeast H3/H4 histone marks and five mouse transcription factor binding tasks; DeepD-60B ranks first on each." loading="lazy" width="2000" height="952" data-caption="Figure 3B. Supervised classifiers on genome-model embeddings: yeast histone marks (H3, H4) and five mouse TF-binding tasks.">
+        <figcaption><b>Figure 3B.</b> On embeddings, DeepD reaches AUROC 0.764 (H3) and 0.811 (H4) in yeast and ranks first on all five mouse TF-binding tasks.</figcaption>
+      </figure>
+    </div>
+
+    <!-- human -->
+    <div class="subhead reveal" id="predict-human">
+      <h3>Human variant effects and regulatory DNA</h3>
+      <p>Across five zero-shot human benchmarks DeepD reaches AUROCs of 0.814–0.965. It is competitive
+        with the Evo 2 series and Nucleotide Transformer (NT) v2, and outperforms AlphaGenome on protein
+        fitness, ClinVar, BRCA1 and BRCA2, with particular strength on synonymous, splice-related and
+        non-coding variants.</p>
+    </div>
+
+    <div class="bench card reveal" id="bench">
+      <div class="bench__tabs" role="tablist" aria-label="Human benchmarks">
+        <button role="tab" aria-selected="true" data-bench="protein">Protein fitness</button>
+        <button role="tab" aria-selected="false" data-bench="snv">ClinVar SNV</button>
+        <button role="tab" aria-selected="false" data-bench="nonsnv">ClinVar non-SNV</button>
+        <button role="tab" aria-selected="false" data-bench="splice">SpliceVarDB</button>
+        <button role="tab" aria-selected="false" data-bench="brca1">BRCA1</button>
+        <button role="tab" aria-selected="false" data-bench="brca2">BRCA2</button>
+      </div>
+      <div class="bench__body">
+        <div class="bench__chart">
+          <div class="bench__head">
+            <p class="bench__metric" id="benchMetric"></p>
+            <div class="seg" id="benchMode" role="tablist" aria-label="Benchmark metric">
+              <button role="tab" aria-selected="true" data-mode="auroc">AUROC</button>
+              <button role="tab" aria-selected="false" data-mode="auprc">AUPRC</button>
+            </div>
+          </div>
+          <ul class="bench__bars" id="benchBars"></ul>
+          <p class="bench__note" id="benchNote"></p>
+        </div>
+        <figure class="bench__figure zoomable">
+          <img id="benchImg" src="assets/fig/f4-protein.webp" alt="" loading="lazy" data-caption="">
+          <figcaption id="benchCap"></figcaption>
+          <div class="model-key" aria-label="Model colors in the figure panel">
+            <span><i style="--c:#b5629b"></i>DeepD-60B</span>
+            <span><i style="--c:#6f8fae"></i>Evo 2 (40B → 1B)</span>
+            <span><i style="--c:#e9f0f5;--b:#9aa9b6"></i>Evo 1</span>
+            <span><i style="--c:#4fa69e"></i>NT-2.5B</span>
+            <span><i style="--c:#9dd6d0"></i>NT-500M</span>
+            <span><i style="--c:#e8a15a"></i>AlphaGenome</span>
+            <span><i style="--c:#bcc38c"></i>Protein LMs</span>
+          </div>
+        </figure>
+      </div>
+    </div>
+
+    <div class="reg card reveal" id="reg">
+      <div class="reg__head">
+        <div class="reg__intro">
+          <h4 class="mini-title">Supervised human regulatory prediction</h4>
+          <p>Classifiers trained on DeepD representations lead all general genome language models on
+            human TF binding, promoter, core-promoter and splice-site prediction.</p>
+        </div>
+        <ul class="reg__legend" id="regLegend" aria-label="Models"></ul>
+      </div>
+      <div class="reg__plot" id="regPlot" role="img" aria-label="Grouped bar chart of supervised AUROC for DeepD-60B and the Evo series on promoter, core-promoter, splice-site and five human TF-binding tasks."></div>
+      <p class="reg__cap"><b>Figure 4F.</b> AUROC of classifiers trained on frozen model representations. Labels above each group show DeepD&rsquo;s margin over the best Evo model; n/a marks tasks without an Evo result.</p>
+      <div class="reg__foot">
+        <div class="metrics metrics--row">
+          <div class="metric metric--best"><b>0.860</b><span>Promoter detection</span></div>
+          <div class="metric"><b>0.620</b><span>Core-promoter detection</span></div>
+          <div class="metric"><b>0.714</b><span>Splice-site prediction</span></div>
+          <div class="metric"><b>0.497–0.688</b><span>Five TF-binding tasks</span></div>
+        </div>
+        <p class="note">AlphaGenome, trained directly on human functional genomic tracks, scores higher on
+          TF binding (0.695–0.918) and splice sites (0.815). DeepD scores higher on promoters (0.860 vs 0.692)
+          and core promoters (0.620 vs 0.601). The two models are complementary (Figure S3E).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== DESIGN ====== -->
+<section class="section" id="design">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <span class="kicker">04 · Design</span>
+      <h2>Controllable design, from promoters to chromosomes</h2>
+      <p class="lede">DeepD moves generation from open-ended continuation toward specification. It
+        writes regulatory elements with a requested strength and builds chromosome-scale sequences that
+        keep gene structure and order while varying within natural ranges.</p>
+    </header>
+
+    <!-- promoters -->
+    <div class="subhead reveal" id="design-promoter">
+      <h3>Maize core promoters with specified strength, validated in vivo</h3>
+      <p>Fine-tuned on STARR-seq activity labels, DeepD generates novel 170-bp synthetic core promoters
+        conditioned on <b>High</b> or <b>Low</b> activity. The designs are dissimilar to natural maize
+        sequences, yet dual-luciferase assays in maize protoplasts confirm the intended direction.</p>
+    </div>
+    <div class="promo reveal">
+      <figure class="card card--figure zoomable promo__pipe">
+        <img src="assets/fig/f6-pipeline.webp" alt="Pipeline for conditional generation of maize core promoters: STARR-seq labels, fine-tuning with strength tokens, conditional generation, filtering and protoplast reporter assays." loading="lazy" width="2000" height="457" data-full="figure-6" data-caption="Figure 6A. Conditional generation and multi-step filtering of maize core promoters with DeepD, followed by reporter assays in maize protoplasts.">
+        <figcaption><b>Figure 6A.</b> Fine-tune on strength tokens, generate conditionally, filter, then test in maize protoplasts.</figcaption>
+      </figure>
+      <div class="promo__stats">
+        <div class="ring" style="--p:76;--c:var(--amber)"><b>76%</b><span>of High designs above the High-activity threshold <small>(n = 83)</small></span></div>
+        <div class="ring" style="--p:83;--c:var(--blue)"><b>83%</b><span>of Low designs below the Low-activity threshold <small>(n = 71)</small></span></div>
+      </div>
+      <figure class="card card--figure zoomable">
+        <img src="assets/fig/f6-strength.webp" alt="Violin plots of predicted and measured promoter strength for High and Low generated candidates with activity thresholds." loading="lazy" width="2000" height="962" data-full="figure-6" data-caption="Figure 6B–C. Predicted strength of High and Low candidate pools (n = 450 each) and measured strength of evaluated candidates by dual-luciferase assay (High n = 83, Low n = 71).">
+        <figcaption><b>Figure 6B–C.</b> Predicted (left) and measured (right) strength of High and Low designs.</figcaption>
+      </figure>
+      <figure class="card card--figure zoomable">
+        <img src="assets/fig/f6-motifs.webp" alt="AT content along the promoter relative to TSS and enriched TATA box and Y patch motifs in High designs." loading="lazy" width="2000" height="1356" data-full="figure-6" data-caption="Figure 6D. Positional AT content and enriched plant core-promoter motifs (TATA box, Y patch) in selected High designs (n = 100).">
+        <figcaption><b>Figure 6D.</b> High designs carry a TATA box and Y patch at positions typical of natural plant core promoters.</figcaption>
+      </figure>
+    </div>
+
+    <!-- CAB -->
+    <div class="cab reveal" id="cab">
+      <div class="cab__text">
+        <span class="kicker">Context–Anchor–Body</span>
+        <h3>Generating beyond a single context window</h3>
+        <p>Early errors in autoregressive generation compound with length. CAB instead writes each 8-kb
+          <b class="c-body">Body</b> between an upstream <b class="c-anchor">Anchor</b> and a downstream
+          <b class="c-ctx">Context</b>, then relays forward: the freshly generated segment anchors the next
+          round. Total output length is no longer tied to the training window.</p>
+        <div class="cab__controls">
+          <button class="btn btn--sm btn--primary" id="cabPlay" aria-pressed="true">Pause</button>
+          <button class="btn btn--sm btn--ghost" id="cabStep">Step</button>
+          <button class="btn btn--sm btn--ghost" id="cabReset">Reset</button>
+        </div>
+      </div>
+      <div class="cab__viz" aria-label="Animated schematic of Context–Anchor–Body relay generation">
+        <div class="cab__track" id="cabTrack"></div>
+        <div class="cab__prompt">
+          <span class="cab__label">Prompt</span>
+          <span class="blk blk--ctx">C</span><span class="blk blk--anchor" id="cabA">A</span>
+          <svg class="cab__arrow" viewBox="0 0 40 12" aria-hidden="true"><path d="M0 6h34M29 1l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          <span class="cab__label">Response</span>
+          <span class="blk blk--body">B<sup>gen</sup></span>
+        </div>
+        <p class="cab__status" id="cabStatus" aria-live="polite"></p>
+        <p class="cab__caption">Schematic after Figure 7A. Each round generates one 8-kb Body chunk.</p>
+      </div>
+    </div>
+
+    <!-- yeast -->
+    <div class="subhead reveal" id="design-yeast">
+      <h3>Complete yeast chromosomes</h3>
+      <p>Fine-tuned on 762 <i>S. cerevisiae</i> genomes with the S288C reference held out, DeepD generated
+        29 full-length chromosome III sequences on the S288C backbone. They keep reference-like gene
+        content and order while carrying variation that mirrors the natural yeast pangenome.</p>
+    </div>
+    <div class="metrics reveal">
+      <div class="metric"><b>309.9–316.6<em class="u">kb</em></b><span>Length of 29 generated ChrIII sequences</span><small>S288C reference: 316.62 kb</small></div>
+      <div class="metric"><b>138–140</b><span>Coding genes</span><small>vs 139 in S288C · tRNAs 10 vs 10</small></div>
+      <div class="metric"><b>138 / 140</b><span>Genes collinear with S288C</span><small>Representative AIYeast25</small></div>
+      <div class="metric metric--best"><b>100%</b><span>of AIYeast25 SNPs found in natural isolates</span><small>3,490 SNPs · no stop-gain</small></div>
+    </div>
+    <div class="explorer reveal" data-explorer>
+      <div class="explorer__tabs" role="tablist" aria-label="Yeast chromosome generation">
+        <button role="tab" aria-selected="true" data-panel="ye-col"><b>Gene collinearity</b><span>S288C ChrIII vs generated AIYeast25</span></button>
+        <button role="tab" aria-selected="false" data-panel="ye-feat"><b>Genome features</b><span>Genes, Pfam hits, tRNAs and protein lengths</span></button>
+        <button role="tab" aria-selected="false" data-panel="ye-var"><b>Variant landscape</b><span>Generated vs natural accessions</span></button>
+        <button role="tab" aria-selected="false" data-panel="ye-loci"><b>Variable loci</b><span>A TE absent in 54.99% of isolates; coding diversity near 190 kb</span></button>
+      </div>
+      <div class="explorer__stage">
+        <figure class="explorer__panel is-active zoomable" id="ye-col">
+          <img src="assets/fig/f7-collinearity.webp" alt="Whole-chromosome alignment between S288C ChrIII and generated AIYeast25 showing gene-level collinearity." loading="lazy" width="2000" height="527" data-full="figure-7" data-caption="Figure 7C. Whole-chromosome alignment between S288C ChrIII and the generated AIYeast25.">
+          <figcaption><b>Figure 7C.</b> Extensive gene-level collinearity across the whole chromosome, telomere to telomere.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="ye-feat">
+          <img src="assets/fig/f7-features.webp" alt="Bar chart of gene, Pfam and tRNA counts for generated yeast chromosomes versus S288C, and protein length histograms." loading="lazy" width="2000" height="1256" data-full="figure-7" data-caption="Figure 7B. Coding genes, Pfam-supported genes and tRNAs in generated ChrIII sequences versus S288C, and protein-length distributions of S288C and AIYeast25.">
+          <figcaption><b>Figure 7B.</b> Reference-like numbers of coding genes, Pfam-supported genes and tRNAs, and matching protein-length distributions.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="ye-var">
+          <img src="assets/fig/f7-variants.webp" alt="Variant landscape of generated and natural ChrIII sequences relative to S288C across collinear blocks." loading="lazy" width="2000" height="756" data-full="figure-7" data-caption="Figure 7D. Synonymous, nonsynonymous and non-coding variants of generated (AIYeast) and natural ChrIII sequences relative to S288C.">
+          <figcaption><b>Figure 7D.</b> Generated chromosomes carry 8–10 SVs and 3,288–4,025 SNPs each, with population-like variant density. They fall across natural clades rather than forming one artificial cluster.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="ye-loci">
+          <img src="assets/fig/f7-loci.webp" alt="Enlarged views of a variable TE region and a coding region in generated and natural yeast chromosomes." loading="lazy" width="2000" height="595" data-full="figure-7" data-caption="Figure 7E–F. A 5,958-bp S288C transposable element absent from generated chromosomes (as in 54.99% of natural accessions), and synonymous and nonsynonymous substitutions in a ~3.5-kb gene.">
+          <figcaption><b>Figure 7E–F.</b> A TE present in S288C is absent from all generated chromosomes, as in 54.99% of natural isolates. A ~3.5-kb gene gains synonymous and missense changes but no stop-gains.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <!-- arabidopsis -->
+    <div class="subhead reveal" id="design-plant">
+      <h3>Megabase-scale plant genome segments</h3>
+      <p>Applied to a 1-Mb interval of <i>Arabidopsis thaliana</i> chromosome 1 (0.13–1.13 Mb), CAB
+        generated three independent sequences. They preserve coherent genic regions and introduce new
+        variation mostly in intergenic DNA, with divergence from TAIR12 in the middle of the natural range.</p>
+    </div>
+    <div class="metrics reveal">
+      <div class="metric metric--best"><b>99.2%</b><span>Core genes recovered</span><small>243 of 245 in AIAtRegion1_01</small></div>
+      <div class="metric"><b>296 / 299</b><span>Reference protein-coding genes recovered</span></div>
+      <div class="metric"><b>1,753</b><span>Exons</span><small>vs 1,760 in TAIR12 · Pfam proteins 266 vs 269</small></div>
+      <div class="metric"><b>88%</b><span>of generated SNPs are non-coding</span><small>All 12 SVs in intergenic or intronic DNA</small></div>
+    </div>
+    <div class="explorer reveal" data-explorer>
+      <div class="explorer__tabs" role="tablist" aria-label="Arabidopsis megabase generation">
+        <button role="tab" aria-selected="true" data-panel="at-map"><b>Gene organization</b><span>TAIR12 vs AIAtRegion1_01, 1 Mb</span></button>
+        <button role="tab" aria-selected="false" data-panel="at-feat"><b>Genome features</b><span>Genes, Pfam, exons, tRNAs and protein lengths</span></button>
+        <button role="tab" aria-selected="false" data-panel="at-div"><b>Natural-range divergence</b><span>Versus 255 natural accessions</span></button>
+        <button role="tab" aria-selected="false" data-panel="at-cons"><b>Constraint-aware variation</b><span>CDS &gt; gene body &gt; promoter &gt; intergenic</span></button>
+        <button role="tab" aria-selected="false" data-panel="at-sv"><b>Structural variants</b><span>A TE-derived insertion and natural-like deletions</span></button>
+      </div>
+      <div class="explorer__stage">
+        <figure class="explorer__panel is-active zoomable" id="at-map">
+          <img src="assets/fig/f8-genemap.webp" alt="Gene organization comparison between TAIR12 and generated AIAtRegion1_01 over 1 Mb with one-to-one gene matches." loading="lazy" width="2000" height="571" data-full="figure-8" data-caption="Figure 8B. Gene organization of the TAIR12 interval versus the generated AIAtRegion1_01, with core and non-core gene matches.">
+          <figcaption><b>Figure 8B.</b> One-to-one gene matches along the full megabase. Of the three genes not fully recovered, two have disrupted reading frames and one lies at the very end of the segment.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="at-feat">
+          <div class="pair">
+            <img src="assets/fig/f8-features.webp" alt="Feature counts for AIAtRegion1_01 versus TAIR12: genes 299/299, Pfam 266/269, exons 1,753/1,760, tRNA 8/8." loading="lazy" width="1251" height="1205" data-full="figure-8" data-caption="Figure 8C. Genomic composition of TAIR12 versus AIAtRegion1_01.">
+            <img src="assets/fig/f8-protlen.webp" alt="Protein length distributions in TAIR12 and AIAtRegion1_01." loading="lazy" width="1469" height="1205" data-full="figure-8" data-caption="Figure 8D. Protein-length distributions in TAIR12 and AIAtRegion1_01.">
+          </div>
+          <figcaption><b>Figure 8C–D.</b> Genomic composition and protein-length distributions closely match the reference.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="at-div">
+          <img src="assets/fig/f8-divergence.webp" alt="Density of sequence divergence from TAIR12 across 255 natural accessions with three generated sequences marked." loading="lazy" width="2000" height="1734" data-full="figure-8" data-caption="Figure 8E. Sequence divergence from TAIR12 for the 1-Mb interval across 255 natural accessions and three generated sequences.">
+          <figcaption><b>Figure 8E.</b> All three generated sequences fall in the middle of the natural divergence distribution.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="at-cons">
+          <img src="assets/fig/f8-conservation.webp" alt="Sequence identity of CDS, gene body, promoter and intergenic regions for natural and generated sequences." loading="lazy" width="2000" height="1948" data-full="figure-8" data-caption="Figure 8F. Sequence conservation of CDSs, gene bodies, 500-bp promoters and intergenic regions relative to TAIR12.">
+          <figcaption><b>Figure 8F.</b> Variation follows functional constraint, as in natural genomes. CDSs are the most conserved and intergenic DNA the most divergent.</figcaption>
+        </figure>
+        <figure class="explorer__panel zoomable" id="at-sv">
+          <img src="assets/fig/f8-sv.webp" alt="Representative structural variants in AIAtRegion1_01 including an ATHILA7-derived insertion and deletions at SIMPLEGUY1 and ATLINE1A." loading="lazy" width="2000" height="925" data-full="figure-8" data-caption="Figure 8G. Representative structural variants in AIAtRegion1_01 compared with natural accessions.">
+          <figcaption><b>Figure 8G.</b> An ATLINE1A deletion overlaps deletions in 236 natural accessions. A new 1.8-kb insertion derives from an endogenous ATHILA7 retrotransposon found elsewhere in the genome, not from arbitrary sequence.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= COMPARE ====== -->
+<section class="section section--tint" id="compare">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <span class="kicker">05 · Comparison</span>
+      <h2>How DeepD compares</h2>
+      <p class="lede">A feature-by-feature comparison with representative published genome models.</p>
+    </header>
+    <div class="table-wrap compare-wrap reveal">
+      <table class="compare">
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            <th scope="col" class="is-us">DeepD</th>
+            <th scope="col">Evo 2</th>
+            <th scope="col">NT-2.5B</th>
+            <th scope="col">AlphaGenome</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Architecture</th>
+            <td class="is-us">Sparse mixture-of-experts</td>
+            <td>Dense StripedHyena 2</td>
+            <td>Dense transformer</td>
+            <td>U-Net–transformer</td>
+          </tr>
+          <tr>
+            <th scope="row">Size and efficiency</th>
+            <td class="is-us">63B sparse, ~1B activated per token; computationally efficient</td>
+            <td>40B, no sparse activation; computationally demanding</td>
+            <td>2.5B, no sparse activation</td>
+            <td>~450M parameters (distilled student model); computationally efficient</td>
+          </tr>
+          <tr>
+            <th scope="row">Pretraining data</th>
+            <td class="is-us">Unselected whole genomes: all genic and the full intergenic regulatory and repetitive space</td>
+            <td>Not whole-genome; selected genic and nearby regions (promoters, ncRNA)</td>
+            <td>Not whole-genome; sampled 6-kb segments of reference genomes</td>
+            <td>Not whole-genome; human and mouse genomic intervals</td>
+          </tr>
+          <tr>
+            <th scope="row">Phylogeny information</th>
+            <td class="is-us"><span class="yes">Yes</span> Explicit species labels embedded from an established phylogenetic tree</td>
+            <td><span class="no">No</span></td>
+            <td><span class="no">No</span></td>
+            <td><span class="no">No</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Target species</th>
+            <td class="is-us">All domains of life, including human and mouse</td>
+            <td>All domains of life, including human and mouse</td>
+            <td>Limited species, including human and mouse</td>
+            <td>Human and mouse</td>
+          </tr>
+          <tr>
+            <th scope="row">Prediction performance</th>
+            <td class="is-us">Competitive in zero-shot protein-fitness and disease-variant prediction in human and other species; outperforms AlphaGenome zero-shot and surpasses the Evo series in supervised classification of intergenic regulatory sequences</td>
+            <td>Competitive in zero-shot protein-fitness and disease-variant prediction</td>
+            <td>Weak</td>
+            <td>Weak zero-shot; strong in supervised classification of intergenic regulatory sequences</td>
+          </tr>
+          <tr>
+            <th scope="row">Genomic feature interpretation</th>
+            <td class="is-us">Exon–intron boundaries, DNA transposons, LTR repeats and distal CREs</td>
+            <td>Exon–intron boundaries; TEs and distal CREs unknown</td>
+            <td>Promoters, enhancers and splice sites; TEs and distal CREs unknown</td>
+            <td>Promoters, TF binding, splicing and distal regulatory interactions; TEs unknown</td>
+          </tr>
+          <tr>
+            <th scope="row">Long-sequence generation strategy</th>
+            <td class="is-us"><span class="yes">Yes</span> Context–Anchor–Body strategy for controllable genome-scale generation</td>
+            <td>Guided only by a starting sequence</td>
+            <td><span class="no">No</span></td>
+            <td><span class="no">No</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Long-sequence generation capability</th>
+            <td class="is-us">High-quality yeast chromosomes that are hard to distinguish from natural isolates, and megabase <i>Arabidopsis</i> segments</td>
+            <td>Limited yeast chromosome generation: gene number, gene order and tRNA number unmatched; gene structure unknown</td>
+            <td><span class="no">No</span></td>
+            <td><span class="no">No</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note compare-note">Evo 2: Brixi et al., <i>Nature</i> 2026. NT: Dalla-Torre et al., <i>Nature Methods</i> 2025. AlphaGenome: Avsec et al., <i>Nature</i> 2026.</p>
+  </div>
+</section>
+
+<!-- ===================================================== RESOURCES ====== -->
+<section class="section" id="resources">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <span class="kicker">06 · Resources</span>
+      <h2>Get DeepD</h2>
+      <p class="lede">Analysis code, generated sequences and a hosted inference API are available now. Source
+        code, model weights and the full inference pipeline will be released in the same repository no later
+        than publication.</p>
+    </header>
+    <div class="res-grid reveal">
+      <a class="res" data-preprint href="#resources">
+        <span class="res__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></span>
+        <b>Preprint</b>
+        <span>DeepD enables efficient genome modeling and controllable long-context sequence generation across domains of life</span>
+        <em class="res__status" data-preprint-status>Coming soon</em>
+      </a>
+      <a class="res" href="https://github.com/biomap-research/DeepD" target="_blank" rel="noopener">
+        <span class="res__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 3 12l5 5M16 7l5 5-5 5M14 4l-4 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <b>Code &amp; analysis scripts</b>
+        <span>Custom analysis scripts on GitHub at biomap-research/DeepD</span>
+        <em class="res__status res__status--live">Available</em>
+      </a>
+      <a class="res" href="https://github.com/biomap-research/DeepD" target="_blank" rel="noopener">
+        <span class="res__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3c0 6 12 6 12 12s-12 0-12 6M18 3c0 6-12 6-12 12s12 0 12 6M8 7h8M8 17h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        <b>Generated sequences</b>
+        <span>29 generated <i>S. cerevisiae</i> ChrIII sequences and 3 megabase-scale <i>A. thaliana</i> sequences</span>
+        <em class="res__status res__status--live">Available</em>
+      </a>
+      <a class="res" href="#api">
+        <span class="res__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 9.5a3.5 3.5 0 1 0-3.4 4.3L4 21v-3h3v-3h3l1.1-1.2 M15.5 6.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <b>Inference API</b>
+        <span>Hosted embedding, logits and sequence-generation endpoints. Request a free academic API key below</span>
+        <em class="res__status res__status--live">Apply now</em>
+      </a>
+    </div>
+
+    <div class="apply reveal" id="api">
+      <div class="apply__info">
+        <span class="kicker">Inference API</span>
+        <h3>Request an API key</h3>
+        <p>The DeepD API returns nucleotide-resolution embeddings, per-position logits and
+          prompt-conditioned DNA generation. Keys are free for non-commercial research.</p>
+        <ol class="apply__steps">
+          <li><b>Apply with your institutional email.</b> University addresses are activated automatically;
+            other addresses are reviewed by our team.</li>
+          <li><b>Check your inbox.</b> Your API key is sent to the email you provide, in English.</li>
+          <li><b>Start calling DeepD.</b> Follow the usage guide and notebooks on GitHub.</li>
+        </ol>
+        <div class="apply__links">
+          <a class="btn btn--sm btn--ghost" href="https://github.com/biomap-research/DeepD#inference-api" target="_blank" rel="noopener">API usage guide</a>
+          <a class="btn btn--sm btn--text" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">License: CC BY-NC 4.0</a>
+        </div>
+      </div>
+
+      <form class="apply__form" id="apiForm" novalidate
+            data-endpoint="https://deepd.biomap.com/api/broker/user/emailRegistration/submit">
+        <div class="field">
+          <label for="apiName">Name</label>
+          <input id="apiName" name="username" type="text" autocomplete="name" required minlength="2" maxlength="64" placeholder="Your full name">
+        </div>
+        <div class="field">
+          <label for="apiOrg">Institution / University</label>
+          <input id="apiOrg" name="organization" type="text" autocomplete="organization" required minlength="2" maxlength="128" placeholder="e.g. China Agricultural University">
+        </div>
+        <div class="field">
+          <label for="apiEmail">Institutional email</label>
+          <input id="apiEmail" name="email" type="email" autocomplete="email" inputmode="email" required maxlength="254" placeholder="name@university.edu">
+        </div>
+        <div class="field field--hp" aria-hidden="true">
+          <label for="apiWebsite">Website</label>
+          <input id="apiWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <label class="check">
+          <input type="checkbox" name="agree" required>
+          <span>I will use DeepD and its outputs for non-commercial purposes under the
+            <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a> license
+            and will cite DeepD in resulting work.</span>
+        </label>
+        <button class="btn btn--primary apply__submit" type="submit">Request API key</button>
+        <p class="apply__status" id="apiStatus" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <div class="cite reveal" id="cite">
+      <div class="cite__head">
+        <h3>Citation</h3>
+        <button class="btn btn--sm btn--ghost-dark" id="copyCite">Copy BibTeX</button>
+      </div>
+<pre class="cite__code" id="citeCode">@article{xin2026deepd,
+  title   = {DeepD enables efficient genome modeling and controllable
+             long-context sequence generation across domains of life},
+  author  = {Xin, Beibei and Wang, Zijian and Yu, An and Chen, Ziyang and
+             Guo, Yucheng and Zhang, Mingpei and Hu, Bozhen and Ye, Chonghang and
+             Chen, Jian and Liu, Qiujie and Zhao, Haiming and Song, Weibin and
+             Dong, Nanqing and Yang, Fan and Yang, Qirong and Zhao, Hainan and
+             Lai, Jinsheng},
+  journal = {Preprint},
+  year    = {2026}
+}</pre>
+      <p class="note">Full reference details will be updated once the preprint is online.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== TEAM ====== -->
+<section class="section section--tint" id="team">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <span class="kicker">07 · Team</span>
+      <h2>Authors and affiliations</h2>
+    </header>
+    <div class="team reveal">
+      <p class="authors">
+        Beibei Xin<sup>1,2,3,5,†</sup>, Zijian Wang<sup>1,†</sup>, An Yu<sup>1,†</sup>, Ziyang Chen<sup>1,†</sup>,
+        Yucheng Guo<sup>6,†</sup>, Mingpei Zhang<sup>1,3</sup>, Bozhen Hu<sup>6</sup>, Chonghang Ye<sup>6</sup>,
+        Jian Chen<sup>1,2,3,5</sup>, Qiujie Liu<sup>1,2,3,5</sup>, Haiming Zhao<sup>1,2,3,5</sup>,
+        Weibin Song<sup>1,2,3,5</sup>, Nanqing Dong<sup>7,8</sup>, Fan Yang<sup>9</sup>, Qirong Yang<sup>6</sup>,
+        Hainan Zhao<sup>1,2,3,5,*</sup>, Jinsheng Lai<sup>1,2,3,4,5,*</sup>
+      </p>
+      <p class="authors__note"><sup>†</sup> These authors contributed equally &nbsp;·&nbsp; <sup>*</sup> Correspondence:
+        <a href="mailto:jlai@cau.edu.cn">jlai@cau.edu.cn</a> (J.L., lead contact) and
+        <a href="mailto:hnzhao@cau.edu.cn">hnzhao@cau.edu.cn</a> (H.Z.)</p>
+      <ol class="affil">
+        <li>State Key Laboratory of Maize Bio-breeding, National Maize Improvement Center, Department of Plant Genetics and Breeding, China Agricultural University, Beijing, China</li>
+        <li>Center for Crop Functional Genomics and Molecular Breeding, China Agricultural University, Beijing, China</li>
+        <li>School of Interdisciplinary Life Sciences, China Agricultural University, Beijing, China</li>
+        <li>Sanya Institute of China Agricultural University, Sanya, China</li>
+        <li>Ministry of Agriculture and Rural Affairs Key Laboratory of Gene Editing Technologies (Beijing), Beijing, China</li>
+        <li>BioMap Research, Beijing, China</li>
+        <li>Shanghai Artificial Intelligence Laboratory, Shanghai, China</li>
+        <li>Shanghai Innovation Institute, Shanghai, China</li>
+        <li>Yazhouwan National Laboratory, Sanya, China</li>
+      </ol>
+    </div>
+    <div class="partners reveal" aria-label="Institutions">
+      <a class="partner" href="https://www.cau.edu.cn/" target="_blank" rel="noopener"><span class="partner__logo"><img src="assets/partners/cau.png" alt="" width="256" height="320" loading="lazy"></span><span class="partner__name">China Agricultural University</span></a>
+      <div class="partner"><span class="partner__logo"><img src="assets/partners/maize-lab.png" alt="" width="320" height="278" loading="lazy"></span><span class="partner__name">State Key Laboratory of Maize Bio-breeding</span></div>
+      <a class="partner" href="https://www.biomap.com/" target="_blank" rel="noopener"><span class="partner__logo"><img class="is-wide" src="assets/partners/biomap.png" alt="" width="480" height="195" loading="lazy"></span><span class="partner__name">BioMap Research</span></a>
+      <a class="partner" href="https://www.shlab.org.cn/" target="_blank" rel="noopener"><span class="partner__logo"><img src="assets/partners/shailab.png" alt="" width="420" height="242" loading="lazy"></span><span class="partner__name">Shanghai Artificial Intelligence Laboratory</span></a>
+      <div class="partner"><span class="partner__logo"><img src="assets/partners/yazhouwan.png" alt="" width="320" height="320" loading="lazy"></span><span class="partner__name">Yazhouwan National Laboratory</span></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ======================================================== FOOTER ====== -->
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="footer__brand">
+      <img src="assets/brand/logo-word-light.png" alt="DeepD" width="144" height="48">
+      <p>Genome foundation model for efficient genome modeling and controllable long-context sequence generation across domains of life.</p>
+    </div>
+    <div class="footer__cols">
+      <div>
+        <h4>Explore</h4>
+        <a href="#model">Model</a><a href="#learn">Interpretability</a><a href="#predict">Prediction</a><a href="#design">Design</a>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <a data-preprint href="#resources">Preprint</a>
+        <a href="https://github.com/biomap-research/DeepD" target="_blank" rel="noopener">GitHub</a>
+        <a href="#api">API key</a>
+        <a href="#cite">Citation</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="mailto:jlai@cau.edu.cn">jlai@cau.edu.cn</a>
+        <a href="mailto:hnzhao@cau.edu.cn">hnzhao@cau.edu.cn</a>
+        <a href="mailto:research@biomap.com">research@biomap.com</a>
+      </div>
+    </div>
+  </div>
+  <div class="wrap footer__base">
+    <span>© 2026 China Agricultural University · BioMap Research</span>
+    <span>Figures reproduced from the DeepD manuscript.</span>
+  </div>
+</footer>
+
+<!-- ====================================================== LIGHTBOX ====== -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Figure viewer" hidden>
+  <div class="lightbox__bar">
+    <span class="lightbox__cap" id="lbCap"></span>
+    <div class="lightbox__actions">
+      <button class="btn btn--sm btn--ghost-light" id="lbFull" hidden>Full figure</button>
+      <button class="btn btn--sm btn--ghost-light" id="lbZoom">Zoom</button>
+      <button class="lightbox__close" id="lbClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="lightbox__stage" id="lbStage"><img id="lbImg" alt=""></div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
